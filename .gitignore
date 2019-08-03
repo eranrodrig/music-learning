@@ -31,3 +31,7 @@ _ReSharper*/
 #Nuget packages folder
 packages/
 gtzan/
+test
+train
+validation
+__pycache__/feature_extraction.cpython-37.pyc

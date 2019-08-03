@@ -1,12 +1,11 @@
 from kymatio import Scattering1D
 from os import listdir
-from numpy import fromfile
 import librosa
 import torch
 
-frame_length = 370
-sample_data = 0
-sample_label = 1
+frame_length = 8158
+SAMPLE_DATA = 0
+SAMPLE_LABEL = 1
 
 genre_dictionary = {
     'classical': 1, 'hiphop': 2, 'jazz': 3, 'metal': 4, 'pop': 5, 'reggae': 6
@@ -20,10 +19,20 @@ def extract_raw_features(track_file_path):
 
 
 def split_sample(sample):
-    splitted_track = librosa.effects.split(
-        sample[sample_data], frame_length=frame_length)
+    sample_track = sample[SAMPLE_DATA]
+    splitted_track = [sample_track[i:i + frame_length]
+                      for i in range(0, len(sample_track), frame_length)]
 
-    return map(lambda track_frame: (track_frame, sample[sample_label]), splitted_track)
+    return map(
+        lambda track_part: (track_part, sample[SAMPLE_LABEL]), splitted_track)
+
+
+def to_normalized_tensor(sample_data):
+    sample_data_tensor = torch.Tensor(sample_data).float()
+    sample_data_tensor /= sample_data_tensor.abs().max()
+    sample_data_tensor = sample_data_tensor.view(1, -1)
+
+    return sample_data_tensor
 
 
 def load_dataset(dataset_path):
@@ -37,11 +46,17 @@ def load_dataset(dataset_path):
         all_tracks_names, labels)
     raw_data_splitted_samples = [item for sublist in map(
         split_sample, raw_data_samples) for item in sublist]
-    tensor_data_samples = map(lambda sample: (torch.tensor(
-        sample[sample_data]).view(1, -1), sample[sample_label]), raw_data_splitted_samples)
+    uni_sized_data_splitted_samples = filter(
+        lambda sample:
+            len(sample[SAMPLE_DATA]) == frame_length,
+        raw_data_splitted_samples)
+    tensor_data_samples = map(lambda sample: (
+        to_normalized_tensor(sample[SAMPLE_DATA]),
+        sample[SAMPLE_LABEL]
+    ), uni_sized_data_splitted_samples)
     scattered_data_samples = map(
         lambda sample: (scattering_function.forward(
-            sample[sample_data]), sample[sample_label]),
+            sample[SAMPLE_DATA]), sample[SAMPLE_LABEL]),
         tensor_data_samples)
-        
+
     return list(scattered_data_samples)
