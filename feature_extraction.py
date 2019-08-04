@@ -35,6 +35,13 @@ def to_normalized_tensor(sample_data):
     return sample_data_tensor
 
 
+def calculateScatter(scatter_function, sample):
+    return (
+        scatter_function.forward(sample[SAMPLE_DATA]),
+        sample[SAMPLE_LABEL]
+    )
+
+
 def load_dataset(dataset_path):
     scattering_function = Scattering1D(6, frame_length, 8)
     all_tracks_names = listdir(dataset_path)
@@ -55,8 +62,8 @@ def load_dataset(dataset_path):
         sample[SAMPLE_LABEL]
     ), uni_sized_data_splitted_samples)
     scattered_data_samples = map(
-        lambda sample: (scattering_function.forward(
-            sample[SAMPLE_DATA]), sample[SAMPLE_LABEL]),
-        tensor_data_samples)
+        lambda sample: calculateScatter(scattering_function, sample),
+        tensor_data_samples
+    )
 
     return list(scattered_data_samples)
