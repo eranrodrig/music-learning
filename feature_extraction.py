@@ -2,6 +2,8 @@ from kymatio import Scattering1D
 from os import listdir
 import librosa
 import torch
+import pickle
+import os
 
 frame_length = 8158
 SAMPLE_DATA = 0
@@ -42,7 +44,7 @@ def calculateScatter(scatter_function, sample):
     )
 
 
-def load_dataset(dataset_path):
+def scatter_dataset(dataset_path):
     scattering_function = Scattering1D(6, frame_length, 8)
     all_tracks_names = listdir(dataset_path)
     labels = map(
@@ -67,3 +69,37 @@ def load_dataset(dataset_path):
     )
 
     return list(scattered_data_samples)
+
+
+def create_dataset_dictionary(train, test, validation):
+    return {
+        'train': train,
+        'test': test,
+        'validation': validation
+    }
+
+
+def load_scattered_datasets():
+    if(os.path.exists('./gtzan/train-scattered') and
+       os.path.exists('./gtzan/test-scattered') and
+            os.path.exists('./gtzan/validation-scattered')):
+        return create_dataset_dictionary(
+            pickle.load('./gtzan/train-scattered'),
+            pickle.load('./gtzan/test-scattered'),
+            pickle.load('./gtzan/validation-scattered')
+        )
+
+    scattered_train = scatter_dataset('./gtzan/train')
+    scattered_test = scatter_dataset('./gtzan/test')
+    scattered_validation = scatter_dataset('./gtzan/validation')
+
+    with open('./gtzan/train-scattered', 'wb') as train_file, open('./gtzan/test-scattered', 'wb') as test_file, open('./gtzan/validation-scattered', 'wb') as validation_file:
+        pickle.dump(scattered_train, train_file)
+        pickle.dump(scattered_test, test_file)
+        pickle.dump(scattered_validation, validation_file)
+
+    return create_dataset_dictionary(
+        scattered_train,
+        scattered_test,
+        scattered_validation
+    )
