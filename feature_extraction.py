@@ -4,10 +4,7 @@ import librosa
 import torch
 import pickle
 import os
-
-frame_length = 8158
-SAMPLE_DATA = 0
-SAMPLE_LABEL = 1
+from settings import frame_length, SAMPLE_DATA, SAMPLE_LABEL
 
 genre_dictionary = {
     'classical': 1, 'hiphop': 2, 'jazz': 3, 'metal': 4, 'pop': 5, 'reggae': 6
@@ -83,11 +80,12 @@ def load_scattered_datasets():
     if(os.path.exists('./gtzan/train-scattered') and
        os.path.exists('./gtzan/test-scattered') and
             os.path.exists('./gtzan/validation-scattered')):
-        return create_dataset_dictionary(
-            pickle.load('./gtzan/train-scattered'),
-            pickle.load('./gtzan/test-scattered'),
-            pickle.load('./gtzan/validation-scattered')
-        )
+        with open('./gtzan/train-scattered', 'rb') as train_file, open('./gtzan/test-scattered', 'rb') as test_file, open('./gtzan/validation-scattered', 'rb') as validation_file:
+            return create_dataset_dictionary(
+                pickle.load(train_file),
+                pickle.load(test_file),
+                pickle.load(validation_file)
+            )
 
     scattered_train = scatter_dataset('./gtzan/train')
     scattered_test = scatter_dataset('./gtzan/test')
